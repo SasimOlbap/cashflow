@@ -25,6 +25,7 @@ export function ItemRow({ item, accent, onLabel, onValue, onRemove, T }) {
         <span style={{ position: "absolute", left: 7, top: "50%", transform: "translateY(-50%)",
           color: T.textDim, fontSize: 15, pointerEvents: "none" }}>$</span>
         <input type="number" min="0" value={item.value} onChange={e => onValue(e.target.value)}
+          onFocus={e => e.target.select()}
           style={{ width: 86, background: T.bgInput, border: `1px solid ${T.borderInput}`,
             borderRadius: 6, color: T.textVal, fontSize: 15, padding: "4px 6px 4px 18px", outline: "none" }} />
       </div>
