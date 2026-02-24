@@ -9,6 +9,24 @@ import {
   GROUP_COLORS, LINK_LEFT, LINK_RIGHT,
 } from "./constants";
 
+// ── month helpers ─────────────────────────────────────────────────────────────
+const toKey  = (y, m) => `${y}-${String(m).padStart(2, "0")}`;
+const fmtMonth = key => {
+  const [y, m] = key.split("-");
+  return new Date(Number(y), Number(m) - 1, 1)
+    .toLocaleString("default", { month: "long", year: "numeric" });
+};
+const today  = new Date();
+const initKey = toKey(today.getFullYear(), today.getMonth() + 1);
+
+const loadMonths = () => {
+  try {
+    const s = localStorage.getItem("cf_months");
+    if (s) return JSON.parse(s);
+  } catch {}
+  return { [initKey]: { income: INIT_INCOME, expenses: INIT_EXPENSES } };
+};
+
 export default function CashFlow() {
   // ── refs & size ───────────────────────────────────────────────────────────
   const svgRef = useRef(null);
@@ -27,20 +45,55 @@ export default function CashFlow() {
   // ── state ─────────────────────────────────────────────────────────────────
   const [darkMode,  setDarkMode]  = useState(true);
   const [hovered,   setHovered]   = useState(null);
-  const [income,    setIncome]    = useState(() => {
-    try { const s = localStorage.getItem("cf_income");   return s ? JSON.parse(s) : INIT_INCOME;   } catch { return INIT_INCOME; }
-  });
-  const [expenses,  setExpenses]  = useState(() => {
-    try { const s = localStorage.getItem("cf_expenses"); return s ? JSON.parse(s) : INIT_EXPENSES; } catch { return INIT_EXPENSES; }
-  });
+  const [months,    setMonths]    = useState(loadMonths);
+  const [curKey,    setCurKey]    = useState(initKey);
   const [niLabel,   setNiLabel]   = useState("");
   const [niType,    setNiType]    = useState("active");
   const [neLabel,   setNeLabel]   = useState("");
   const [neCat,     setNeCat]     = useState("Living");
 
-  // Auto-save to localStorage whenever data changes
-  useEffect(() => { try { localStorage.setItem("cf_income",   JSON.stringify(income));   } catch {} }, [income]);
-  useEffect(() => { try { localStorage.setItem("cf_expenses", JSON.stringify(expenses)); } catch {} }, [expenses]);
+  // Auto-save months to localStorage
+  useEffect(() => {
+    try { localStorage.setItem("cf_months", JSON.stringify(months)); } catch {}
+  }, [months]);
+
+  // Current month data
+  const curData    = months[curKey] || { income: [], expenses: [] };
+  const income     = curData.income;
+  const expenses   = curData.expenses;
+  const isEmpty    = income.length === 0 && expenses.length === 0;
+
+  const setIncome   = fn => setMonths(p => ({ ...p, [curKey]: { ...p[curKey], income:   fn(p[curKey]?.income   || []) } }));
+  const setExpenses = fn => setMonths(p => ({ ...p, [curKey]: { ...p[curKey], expenses: fn(p[curKey]?.expenses || []) } }));
+
+  // ── month navigation ──────────────────────────────────────────────────────
+  const prevMonth = () => {
+    const [y, m] = curKey.split("-").map(Number);
+    const newKey = m === 1 ? toKey(y - 1, 12) : toKey(y, m - 1);
+    if (!months[newKey]) setMonths(p => ({ ...p, [newKey]: { income: [], expenses: [] } }));
+    setCurKey(newKey);
+  };
+  const nextMonth = () => {
+    const [y, m] = curKey.split("-").map(Number);
+    const newKey = m === 12 ? toKey(y + 1, 1) : toKey(y, m + 1);
+    if (!months[newKey]) setMonths(p => ({ ...p, [newKey]: { income: [], expenses: [] } }));
+    setCurKey(newKey);
+  };
+  const copyFromPrev = () => {
+    const [y, m] = curKey.split("-").map(Number);
+    const prevKey = m === 1 ? toKey(y - 1, 12) : toKey(y, m - 1);
+    const prev = months[prevKey];
+    if (!prev) return;
+    // Deep copy with new IDs so items are independent
+    const newIncome   = prev.income.map(i   => ({ ...i,   id: uid() }));
+    const newExpenses = prev.expenses.map(e => ({ ...e, id: uid() }));
+    setMonths(p => ({ ...p, [curKey]: { income: newIncome, expenses: newExpenses } }));
+  };
+
+  // Check if previous month has data
+  const [y, m] = curKey.split("-").map(Number);
+  const prevKey = m === 1 ? toKey(y - 1, 12) : toKey(y, m - 1);
+  const hasPrev = !!(months[prevKey]?.income?.length || months[prevKey]?.expenses?.length);
 
   const T = darkMode ? darkTheme : lightTheme;
   const { colOffsets, startDrag } = useDrag(svgRef, svgW);
@@ -67,7 +120,6 @@ export default function CashFlow() {
   // ── layout ────────────────────────────────────────────────────────────────
   const { nodes, links, nodeWidth, grand, totalExp, surplus } = buildLayout(income, expenses, svgW, svgH, colOffsets);
 
-  // Recompute link sx/tx after drag offsets are baked in
   const nodeMapD = {};
   nodes.forEach(n => { nodeMapD[n.id] = n; });
   links.forEach(l => {
@@ -90,13 +142,13 @@ export default function CashFlow() {
   const hovLink = hovered ? links.find(l => l.source + "-" + l.target === hovered) : null;
 
   // ── shared styles ─────────────────────────────────────────────────────────
-  const cardSt = { background: T.bgCard, borderRadius: 14, padding: "14px 16px",
+  const cardSt  = { background: T.bgCard, borderRadius: 14, padding: "14px 16px",
     border: `1px solid ${T.border}`, display: "flex", flexDirection: "column", gap: 0, transition: "background 0.3s" };
-  const inpSt  = { flex: 1, minWidth: 0, background: T.bgInput, border: `1px solid ${T.borderInput}`,
+  const inpSt   = { flex: 1, minWidth: 0, background: T.bgInput, border: `1px solid ${T.borderInput}`,
     borderRadius: 6, color: T.textNode, fontSize: 15, padding: "5px 7px", outline: "none" };
-  const selSt  = { background: T.bgInput, border: `1px solid ${T.borderInput}`, borderRadius: 6,
+  const selSt   = { background: T.bgInput, border: `1px solid ${T.borderInput}`, borderRadius: 6,
     color: T.selText, fontSize: 15, padding: "5px 7px", outline: "none" };
-  const btnSt  = { background: T.btnBg, border: "none", borderRadius: 6, color: T.btnText,
+  const btnSt   = { background: T.btnBg, border: "none", borderRadius: 6, color: T.btnText,
     fontSize: 15, padding: "5px 10px", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 };
   const subHead = label => (
     <div style={{ fontSize: 13, letterSpacing: "0.13em", textTransform: "uppercase",
@@ -131,6 +183,21 @@ export default function CashFlow() {
               {darkMode ? "☀️ Light" : "🌙 Dark"}
             </button>
           </div>
+
+          {/* Month selector */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <button onClick={prevMonth} style={{ ...btnSt, fontSize: 18, padding: "2px 10px" }}>‹</button>
+            <span style={{ fontSize: 17, fontWeight: 600, minWidth: 160, textAlign: "center", color: T.text }}>
+              {fmtMonth(curKey)}
+            </span>
+            <button onClick={nextMonth} style={{ ...btnSt, fontSize: 18, padding: "2px 10px" }}>›</button>
+            {isEmpty && hasPrev && (
+              <button onClick={copyFromPrev} style={{ ...btnSt, background: "#7c3aed", color: "#fff", fontSize: 13, marginLeft: 6 }}>
+                Copy from previous month
+              </button>
+            )}
+          </div>
+
           <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "baseline" }}>
             <span style={{ fontSize: 16, color: T.textMuted }}>Income: <strong style={{ color: "#c4b5fd" }}>${Number(grand).toLocaleString()}</strong></span>
             <span style={{ fontSize: 16, color: T.textMuted }}>Expenses: <strong style={{ color: "#fbcfe8" }}>${Number(totalExp).toLocaleString()}</strong></span>
