@@ -102,9 +102,9 @@ function buildLayout(income, expenses, width, height, colOffsets = [0,0,0,0,0]) 
   const inner = width - labelPad * 2;
   const baseColX = [
     labelPad - 0.03 * inner,   // source (shifted left slightly)
-    labelPad + 0.20 * inner,   // agg (shifted left)
-    labelPad + 0.42 * inner,   // total
-    labelPad + 0.58 * inner,   // category
+    labelPad + 0.25 * inner,   // agg
+    labelPad + 0.50 * inner,   // total (center)
+    labelPad + 0.75 * inner,   // category
     labelPad + 1.00 * inner,   // leaf
   ];
   // Apply drag offsets to get actual positions
