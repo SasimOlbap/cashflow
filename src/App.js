@@ -27,12 +27,20 @@ export default function CashFlow() {
   // ── state ─────────────────────────────────────────────────────────────────
   const [darkMode,  setDarkMode]  = useState(true);
   const [hovered,   setHovered]   = useState(null);
-  const [income,    setIncome]    = useState(INIT_INCOME);
-  const [expenses,  setExpenses]  = useState(INIT_EXPENSES);
+  const [income,    setIncome]    = useState(() => {
+    try { const s = localStorage.getItem("cf_income");   return s ? JSON.parse(s) : INIT_INCOME;   } catch { return INIT_INCOME; }
+  });
+  const [expenses,  setExpenses]  = useState(() => {
+    try { const s = localStorage.getItem("cf_expenses"); return s ? JSON.parse(s) : INIT_EXPENSES; } catch { return INIT_EXPENSES; }
+  });
   const [niLabel,   setNiLabel]   = useState("");
   const [niType,    setNiType]    = useState("active");
   const [neLabel,   setNeLabel]   = useState("");
   const [neCat,     setNeCat]     = useState("Living");
+
+  // Auto-save to localStorage whenever data changes
+  useEffect(() => { try { localStorage.setItem("cf_income",   JSON.stringify(income));   } catch {} }, [income]);
+  useEffect(() => { try { localStorage.setItem("cf_expenses", JSON.stringify(expenses)); } catch {} }, [expenses]);
 
   const T = darkMode ? darkTheme : lightTheme;
   const { colOffsets, startDrag } = useDrag(svgRef, svgW);
