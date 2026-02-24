@@ -25,7 +25,10 @@ export function buildLayout(income, expenses, width, height, colOffsets = [0, 0,
   push("__total", deficit > 0 ? "Expenses " + fmt(totalExp) : "Income " + fmt(grand), totalNodeVal, "total");
   CATS.forEach(c => { if (catSums[c] > 0) push("__cat_" + c, CAT_LABELS[c], catSums[c], "category"); });
   if (surplus > 0) push("__surplus", "Surplus", surplus, "category");
-  expenses.forEach(e => { if ((Number(e.value) || 0) > 0) push(e.id, e.label, Number(e.value) || 0, "leaf"); });
+  CATS.forEach(c => {
+    expenses.filter(e => e.category === c && (Number(e.value) || 0) > 0)
+      .forEach(e => push(e.id, e.label, Number(e.value) || 0, "leaf"));
+  });
   if (surplus > 0) push("__surplus_leaf", "Surplus", surplus, "leaf");
 
   const links = [];
