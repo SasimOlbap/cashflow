@@ -13,13 +13,14 @@ export function useDrag(svgRef, svgW) {
   useEffect(() => {
     const onMove = e => {
       if (!dragRef.current) return;
+      if (e.buttons === 0) { dragRef.current = null; return; }
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const dx      = clientX - dragRef.current.startX;
       const svgEl   = svgRef.current ? svgRef.current.querySelector("svg") : null;
       const scale   = svgEl ? svgW / svgEl.getBoundingClientRect().width : 1;
       const raw     = dragRef.current.startOffset + dx * scale;
+      if (!isFinite(raw)) return;
       const col     = dragRef.current.col;
-      // Outer columns get a tighter limit, inner columns more freedom
       const limit   = (col === 0 || col === 4) ? svgW * 0.05 : svgW * 0.15;
       const clamped = Math.max(-limit, Math.min(limit, raw));
       setColOffsets(prev => {

@@ -92,17 +92,20 @@ export function buildLayout(income, expenses, width, height, colOffsets = [0, 0,
   const srcRem = {}, tgtRem = {};
   nodes.forEach(n => { srcOff[n.id] = 0; tgtOff[n.id] = 0; srcRem[n.id] = n.h; tgtRem[n.id] = n.h; });
   links.forEach(l => {
-    const s = nodeMap[l.source], t = nodeMap[l.target];
-    if (!s || !t) return;
-    const sh = Math.min(s.value > 0 ? (l.value / s.value) * s.h : 0, srcRem[s.id]);
-    const th = Math.min(t.value > 0 ? (l.value / t.value) * t.h : 0, tgtRem[t.id]);
-    l.sy0 = s.y + srcOff[s.id]; l.sy1 = l.sy0 + sh;
-    l.ty0 = t.y + tgtOff[t.id]; l.ty1 = l.ty0 + th;
-    l.sx  = s.x + (s.w || nodeWidth);
-    l.tx  = t.x;
-    l.sourceNode = s; l.targetNode = t;
-    srcOff[s.id] += sh; tgtOff[t.id] += th;
-    srcRem[s.id] -= sh; tgtRem[t.id] -= th;
+    try {
+      const s = nodeMap[l.source], t = nodeMap[l.target];
+      if (!s || !t) return;
+      const sh = Math.min(s.value > 0 ? (l.value / s.value) * s.h : 0, srcRem[s.id]);
+      const th = Math.min(t.value > 0 ? (l.value / t.value) * t.h : 0, tgtRem[t.id]);
+      if (!isFinite(sh) || !isFinite(th)) return;
+      l.sy0 = s.y + srcOff[s.id]; l.sy1 = l.sy0 + sh;
+      l.ty0 = t.y + tgtOff[t.id]; l.ty1 = l.ty0 + th;
+      l.sx  = s.x + (s.w || nodeWidth);
+      l.tx  = t.x;
+      l.sourceNode = s; l.targetNode = t;
+      srcOff[s.id] += sh; tgtOff[t.id] += th;
+      srcRem[s.id] -= sh; tgtRem[t.id] -= th;
+    } catch {}
   });
 
   return { nodes, links, nodeWidth, grand, totalExp, surplus };
