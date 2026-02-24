@@ -1,54 +1,42 @@
 import { fmt, CATS, CAT_LABELS } from "./constants";
 
 export function buildLayout(income, expenses, width, height, colOffsets = [0, 0, 0, 0, 0]) {
-  // ── totals ────────────────────────────────────────────────────────────────
   const active     = income.filter(i => i.type === "active");
   const passive    = income.filter(i => i.type === "passive");
   const activeSum  = active.reduce((s, i)  => s + (Number(i.value) || 0), 0);
   const passiveSum = passive.reduce((s, i) => s + (Number(i.value) || 0), 0);
   const grand      = activeSum + passiveSum;
-
-  const catSums = {};
-  CATS.forEach(c => {
-    catSums[c] = expenses
-      .filter(e => e.category === c)
-      .reduce((s, e) => s + (Number(e.value) || 0), 0);
-  });
-  const totalExp = CATS.reduce((s, c) => s + catSums[c], 0);
-  const surplus  = grand - totalExp;
-  const deficit  = surplus < 0 ? Math.abs(surplus) : 0;
+  const catSums    = {};
+  CATS.forEach(c => { catSums[c] = expenses.filter(e => e.category === c).reduce((s, e) => s + (Number(e.value) || 0), 0); });
+  const totalExp     = CATS.reduce((s, c) => s + catSums[c], 0);
+  const surplus      = grand - totalExp;
+  const deficit      = surplus < 0 ? Math.abs(surplus) : 0;
   const totalNodeVal = deficit > 0 ? totalExp : grand;
 
-  // ── nodes ─────────────────────────────────────────────────────────────────
   const nodes = [];
   const push = (id, label, value, group) => nodes.push({ id, label, value: value || 0, group });
 
-  if (deficit > 0) push("__deficit_src", "Deficit", deficit, "source");
   active.forEach(i  => push(i.id, i.label, Number(i.value) || 0, "source"));
   passive.forEach(i => push(i.id, i.label, Number(i.value) || 0, "source"));
+  if (deficit > 0) push("__deficit_src", "Deficit", deficit, "source");
   if (activeSum  > 0) push("__active",      "Active Income",  activeSum,  "agg");
   if (passiveSum > 0) push("__passive",     "Passive Income", passiveSum, "agg");
   if (deficit    > 0) push("__deficit_agg", "Deficit",        deficit,    "agg");
-  push("__total", "Income " + fmt(grand), totalNodeVal, "total");
-  CATS.forEach(c => {
-    if (catSums[c] > 0) push("__cat_" + c, CAT_LABELS[c], catSums[c], "category");
-  });
+  push("__total", deficit > 0 ? "Expenses " + fmt(totalExp) : "Income " + fmt(grand), totalNodeVal, "total");
+  CATS.forEach(c => { if (catSums[c] > 0) push("__cat_" + c, CAT_LABELS[c], catSums[c], "category"); });
   if (surplus > 0) push("__surplus", "Surplus", surplus, "category");
-  expenses.forEach(e => {
-    if ((Number(e.value) || 0) > 0) push(e.id, e.label, Number(e.value) || 0, "leaf");
-  });
+  expenses.forEach(e => { if ((Number(e.value) || 0) > 0) push(e.id, e.label, Number(e.value) || 0, "leaf"); });
   if (surplus > 0) push("__surplus_leaf", "Surplus", surplus, "leaf");
 
-  // ── links ─────────────────────────────────────────────────────────────────
   const links = [];
   const addLink = (s, t, v) => { if (v > 0) links.push({ source: s, target: t, value: v }); };
 
-  if (deficit > 0) addLink("__deficit_src", "__deficit_agg", deficit);
   active.forEach(i  => { if (activeSum  > 0) addLink(i.id, "__active",  Number(i.value) || 0); });
   passive.forEach(i => { if (passiveSum > 0) addLink(i.id, "__passive", Number(i.value) || 0); });
   if (activeSum  > 0) addLink("__active",      "__total", activeSum);
   if (passiveSum > 0) addLink("__passive",     "__total", passiveSum);
-  if (deficit    > 0) addLink("__deficit_agg", "__total", deficit);
+  if (deficit    > 0) addLink("__deficit_src", "__deficit_agg", deficit);
+  if (deficit    > 0) addLink("__deficit_agg", "__total",       deficit);
   CATS.forEach(c => { if (catSums[c] > 0) addLink("__total", "__cat_" + c, catSums[c]); });
   if (surplus > 0) addLink("__total", "__surplus", surplus);
   expenses.forEach(e => {
@@ -57,16 +45,11 @@ export function buildLayout(income, expenses, width, height, colOffsets = [0, 0,
   });
   if (surplus > 0) addLink("__surplus", "__surplus_leaf", surplus);
 
-  // ── positioning ───────────────────────────────────────────────────────────
-  const colMap   = { source: 0, agg: 1, total: 2, category: 3, leaf: 4 };
+  const colMap    = { source: 0, agg: 1, total: 2, category: 3, leaf: 4 };
   const colWidths = [20, 14, 10, 14, 20];
   const nodeWidth = 14;
-  const nodeMap  = {};
-  nodes.forEach(n => {
-    n.col = colMap[n.group];
-    n.w   = colWidths[n.col];
-    nodeMap[n.id] = n;
-  });
+  const nodeMap   = {};
+  nodes.forEach(n => { n.col = colMap[n.group]; n.w = colWidths[n.col]; nodeMap[n.id] = n; });
 
   const labelPad  = Math.max(60, Math.min(120, width * 0.12));
   const inner     = width - labelPad * 2;
@@ -80,7 +63,6 @@ export function buildLayout(income, expenses, width, height, colOffsets = [0, 0,
   const actualColX = baseColX.map((x, i) => x + (colOffsets[i] || 0));
   nodes.forEach(n => { n.x = actualColX[n.col]; });
 
-  // ── height scaling (hourglass effect) ─────────────────────────────────────
   const centerX      = actualColX[2];
   const maxDistLeft  = Math.max(...[0, 1].map(i => Math.abs(actualColX[i] - centerX))) || 1;
   const maxDistRight = Math.max(...[3, 4].map(i => Math.abs(actualColX[i] - centerX))) || 1;
@@ -103,7 +85,6 @@ export function buildLayout(income, expenses, width, height, colOffsets = [0, 0,
     col.forEach(n => { n.y += off; });
   });
 
-  // ── link geometry ─────────────────────────────────────────────────────────
   const srcOff = {}, tgtOff = {};
   nodes.forEach(n => { srcOff[n.id] = 0; tgtOff[n.id] = 0; });
   links.forEach(l => {
