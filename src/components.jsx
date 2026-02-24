@@ -1,4 +1,4 @@
-import { pct } from "./constants";
+import { fmt } from "./constants";
 
 // ── LinkPath ──────────────────────────────────────────────────────────────
 export function LinkPath({ link, color, onHover, hovered }) {

@@ -1,4 +1,4 @@
-import { fmt, CATS, CAT_LABELS, GROUP_COLORS } from "./constants";
+import { fmt, CATS, CAT_LABELS } from "./constants";
 
 export function buildLayout(income, expenses, width, height, colOffsets = [0, 0, 0, 0, 0]) {
   // ── totals ────────────────────────────────────────────────────────────────
