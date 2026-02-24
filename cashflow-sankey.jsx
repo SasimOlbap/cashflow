@@ -98,7 +98,7 @@ function buildLayout(income, expenses, width, height, colOffsets = [0,0,0,0,0]) 
   nodes.forEach(n => { n.w = colWidths[n.col]; });
 
   // Reserve space for labels on both sides, then place columns symmetrically
-  const labelPad = 120; // space for left/right labels
+  const labelPad = Math.max(60, Math.min(120, width * 0.12)); // responsive: ~12% of width, min 60, max 120
   const inner = width - labelPad * 2;
   const baseColX = [
     labelPad - 0.03 * inner,   // source (shifted left slightly)
