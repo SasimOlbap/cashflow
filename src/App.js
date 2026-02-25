@@ -196,15 +196,14 @@ function CashFlow() {
               }}>
                 {darkMode ? "☀️ Light" : "🌙 Dark"}
               </button>
-              {isEmpty && hasPrev && (
-                <button onClick={copyFromPrev} style={{
+              <button onClick={copyFromPrev} style={{
                   background: "#7c3aed", border: "none", borderRadius: 20,
                   padding: "6px 14px", cursor: "pointer", color: "#fff",
                   fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
+                  visibility: (isEmpty && hasPrev) ? "visible" : "hidden",
                 }}>
                   Copy from previous month
                 </button>
-              )}
             </div>
           </div>
 
