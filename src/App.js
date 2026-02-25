@@ -30,11 +30,6 @@ class ErrorBoundary extends Component {
 
 // ── month helpers ─────────────────────────────────────────────────────────────
 const toKey  = (y, m) => `${y}-${String(m).padStart(2, "0")}`;
-const fmtMonth = key => {
-  const [y, m] = key.split("-");
-  return new Date(Number(y), Number(m) - 1, 1)
-    .toLocaleString("default", { month: "long", year: "numeric" });
-};
 const today   = new Date();
 const initKey = toKey(today.getFullYear(), 1);
 
@@ -90,39 +85,9 @@ function CashFlow() {
   const curData    = months[curKey] || { income: [], expenses: [] };
   const income     = curData.income;
   const expenses   = curData.expenses;
-  const isEmpty    = income.length === 0 && expenses.length === 0;
 
   const setIncome   = fn => setMonths(p => ({ ...p, [curKey]: { ...p[curKey], income:   fn(p[curKey]?.income   || []) } }));
   const setExpenses = fn => setMonths(p => ({ ...p, [curKey]: { ...p[curKey], expenses: fn(p[curKey]?.expenses || []) } }));
-
-  // ── month navigation ──────────────────────────────────────────────────────
-  const prevMonth = () => {
-    const [y, m] = curKey.split("-").map(Number);
-    const newKey = m === 1 ? toKey(y - 1, 12) : toKey(y, m - 1);
-    if (!months[newKey]) setMonths(p => ({ ...p, [newKey]: { income: [], expenses: [] } }));
-    setCurKey(newKey);
-  };
-  const nextMonth = () => {
-    const [y, m] = curKey.split("-").map(Number);
-    const newKey = m === 12 ? toKey(y + 1, 1) : toKey(y, m + 1);
-    if (!months[newKey]) setMonths(p => ({ ...p, [newKey]: { income: [], expenses: [] } }));
-    setCurKey(newKey);
-  };
-  const copyFromPrev = () => {
-    const [y, m] = curKey.split("-").map(Number);
-    const prevKey = m === 1 ? toKey(y - 1, 12) : toKey(y, m - 1);
-    const prev = months[prevKey];
-    if (!prev) return;
-    // Deep copy with new IDs so items are independent
-    const newIncome   = prev.income.map(i   => ({ ...i,   id: uid() }));
-    const newExpenses = prev.expenses.map(e => ({ ...e, id: uid() }));
-    setMonths(p => ({ ...p, [curKey]: { income: newIncome, expenses: newExpenses } }));
-  };
-
-  // Check if previous month has data
-  const [y, m] = curKey.split("-").map(Number);
-  const prevKey = m === 1 ? toKey(y - 1, 12) : toKey(y, m - 1);
-  const hasPrev = !!(months[prevKey]?.income?.length || months[prevKey]?.expenses?.length);
 
   const T = darkMode ? darkTheme : lightTheme;
   const { colOffsets, startDrag } = useDrag(svgRef, svgW);
