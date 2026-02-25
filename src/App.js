@@ -197,7 +197,7 @@ function CashFlow() {
                 </span>
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 20 }}>
               <button onClick={() => setDarkMode(d => !d)} style={{
                 background: T.btnBg, border: `1px solid ${T.border}`, borderRadius: 20,
                 padding: "6px 14px", cursor: "pointer", color: T.btnText,
