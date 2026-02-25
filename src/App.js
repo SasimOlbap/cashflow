@@ -85,9 +85,24 @@ function CashFlow() {
   const curData    = months[curKey] || { income: [], expenses: [] };
   const income     = curData.income;
   const expenses   = curData.expenses;
+  const isEmpty    = income.length === 0 && expenses.length === 0;
 
   const setIncome   = fn => setMonths(p => ({ ...p, [curKey]: { ...p[curKey], income:   fn(p[curKey]?.income   || []) } }));
   const setExpenses = fn => setMonths(p => ({ ...p, [curKey]: { ...p[curKey], expenses: fn(p[curKey]?.expenses || []) } }));
+
+  const copyFromPrev = () => {
+    const [y, m] = curKey.split("-").map(Number);
+    const prevKey = m === 1 ? toKey(y - 1, 12) : toKey(y, m - 1);
+    const prev = months[prevKey];
+    if (!prev) return;
+    setMonths(p => ({ ...p, [curKey]: {
+      income:   prev.income.map(i   => ({ ...i, id: uid() })),
+      expenses: prev.expenses.map(e => ({ ...e, id: uid() })),
+    }}));
+  };
+  const [y, m] = curKey.split("-").map(Number);
+  const prevKey = m === 1 ? toKey(y - 1, 12) : toKey(y, m - 1);
+  const hasPrev = !!(months[prevKey]?.income?.length || months[prevKey]?.expenses?.length);
 
   const T = darkMode ? darkTheme : lightTheme;
   const { colOffsets, startDrag } = useDrag(svgRef, svgW);
@@ -172,14 +187,25 @@ function CashFlow() {
               <div style={{ fontSize: 13, letterSpacing: "0.2em", textTransform: "uppercase", color: T.accent, marginBottom: 4 }}>Financial Overview</div>
               <h1 style={{ fontSize: "clamp(22px,3vw,34px)", fontWeight: 700, margin: "0 0 8px", letterSpacing: "-0.02em" }}>Cash Flow Visualizer</h1>
             </div>
-            <button onClick={() => setDarkMode(d => !d)} style={{
-              background: T.btnBg, border: `1px solid ${T.border}`, borderRadius: 20,
-              padding: "6px 14px", cursor: "pointer", color: T.btnText,
-              fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
-              transition: "all 0.2s", flexShrink: 0, marginTop: 4,
-            }}>
-              {darkMode ? "☀️ Light" : "🌙 Dark"}
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, marginTop: 4 }}>
+              <button onClick={() => setDarkMode(d => !d)} style={{
+                background: T.btnBg, border: `1px solid ${T.border}`, borderRadius: 20,
+                padding: "6px 14px", cursor: "pointer", color: T.btnText,
+                fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
+                transition: "all 0.2s", flexShrink: 0,
+              }}>
+                {darkMode ? "☀️ Light" : "🌙 Dark"}
+              </button>
+              {isEmpty && hasPrev && (
+                <button onClick={copyFromPrev} style={{
+                  background: "#7c3aed", border: "none", borderRadius: 20,
+                  padding: "6px 14px", cursor: "pointer", color: "#fff",
+                  fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
+                }}>
+                  Copy from previous month
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Stats row */}
