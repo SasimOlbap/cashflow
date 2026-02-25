@@ -60,7 +60,7 @@ function CashFlow() {
   useEffect(() => {
     const obs = new ResizeObserver(entries => {
       const w = entries[0].contentRect.width;
-      setSvgW(w); setSvgH(Math.max(320, w * 0.50));
+      setSvgW(w); setSvgH(Math.max(320, w * 0.68));
     });
     if (svgRef.current) obs.observe(svgRef.current);
     return () => obs.disconnect();
@@ -231,13 +231,13 @@ function CashFlow() {
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
 
         {/* Header */}
-        <div style={{ marginBottom: 6 }}>
+        <div style={{ marginBottom: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
             <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
               <div style={{ fontSize: 13, letterSpacing: "0.2em", textTransform: "uppercase", color: T.accent, marginBottom: 4 }}>Financial Overview</div>
               <h1 style={{ fontSize: "clamp(22px,3vw,34px)", fontWeight: 700, margin: "0", letterSpacing: "-0.02em" }}>Cash Flow Visualizer</h1>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 20 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
               <div style={{ display: "flex", gap: 6, alignItems: "flex-end" }}>
                 <input ref={importRef} type="file" accept=".json" onChange={handleImport} style={{ display: "none" }} />
                 <div style={{ display: "flex", border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden" }}>
@@ -357,7 +357,7 @@ function CashFlow() {
         </div>
 
         {/* Editor */}
-        <div style={{ display: "flex", gap: 14, marginTop: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 14, marginTop: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
 
           {/* Income */}
           <div style={{ ...cardSt, flex: 1, minWidth: 240 }}>
