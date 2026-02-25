@@ -217,8 +217,8 @@ function CashFlow() {
             </button>
           </div>
 
-          {/* Stats row with month selector on the right */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          {/* Stats row */}
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
             <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "baseline" }}>
               <span style={{ fontSize: 16, color: T.textMuted }}>Income: <strong style={{ color: "#c4b5fd" }}>${Number(grand).toLocaleString()}</strong></span>
               <span style={{ fontSize: 16, color: T.textMuted }}>Expenses: <strong style={{ color: "#fbcfe8" }}>${Number(totalExp).toLocaleString()}</strong></span>
@@ -228,16 +228,6 @@ function CashFlow() {
                   : <><strong style={{ color: "#f87171" }}>Deficit</strong>{": "}<strong style={{ color: "#f87171" }}>${Math.abs(surplus).toLocaleString()}</strong></>
                 }
               </span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <button onClick={prevMonth} style={{ ...btnSt, fontSize: 18, padding: "2px 10px" }}>‹</button>
-              <span style={{ fontSize: 17, fontWeight: 600, minWidth: 140, textAlign: "center", color: T.text }}>{fmtMonth(curKey)}</span>
-              <button onClick={nextMonth} style={{ ...btnSt, fontSize: 18, padding: "2px 10px" }}>›</button>
-              {isEmpty && hasPrev && (
-                <button onClick={copyFromPrev} style={{ ...btnSt, background: "#7c3aed", color: "#fff", fontSize: 13, marginLeft: 4 }}>
-                  Copy from previous month
-                </button>
-              )}
             </div>
           </div>
         </div>
