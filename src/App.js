@@ -218,9 +218,9 @@ function CashFlow() {
       color: T.textSub, margin: "10px 0 5px" }}>{label}</div>
   );
   const colHead = (label, total, color) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-      <span style={{ fontSize: 14, letterSpacing: "0.14em", textTransform: "uppercase", color: T.accentHead }}>{label}</span>
-      <span style={{ fontSize: 19, fontWeight: 700, color }}>${Number(total).toLocaleString()}</span>
+    <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
+      <span style={{ fontSize: 16, letterSpacing: "0.14em", textTransform: "uppercase", color: T.accentHead }}>{label}</span>
+      <span style={{ fontSize: 16, fontWeight: 700, color }}>${Number(total).toLocaleString()}</span>
     </div>
   );
 
