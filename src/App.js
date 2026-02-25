@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Component } from "react";
 import { buildLayout } from "./buildLayout";
 import { LinkPath, ItemRow, SankeyNode } from "./components";
 import { useDrag } from "./useDrag";
@@ -8,6 +8,25 @@ import {
   INIT_INCOME, INIT_EXPENSES, CATS, CAT_COLORS,
   GROUP_COLORS, LINK_LEFT, LINK_RIGHT,
 } from "./constants";
+
+// ── error boundary ────────────────────────────────────────────────────────────
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { crashed: false }; }
+  static getDerivedStateFromError() { return { crashed: true }; }
+  render() {
+    if (this.state.crashed) return (
+      <div style={{ padding: 40, textAlign: "center", fontFamily: "sans-serif" }}>
+        <h2>Something went wrong 😅</h2>
+        <p>Try refreshing the page.</p>
+        <button onClick={() => window.location.reload()}
+          style={{ padding: "8px 20px", cursor: "pointer", borderRadius: 8, border: "none", background: "#7c3aed", color: "#fff", fontSize: 15 }}>
+          Refresh
+        </button>
+      </div>
+    );
+    return this.props.children;
+  }
+}
 
 // ── month helpers ─────────────────────────────────────────────────────────────
 const toKey  = (y, m) => `${y}-${String(m).padStart(2, "0")}`;
@@ -27,7 +46,11 @@ const loadMonths = () => {
   return { [initKey]: { income: INIT_INCOME, expenses: INIT_EXPENSES } };
 };
 
-export default function CashFlow() {
+export default function App() {
+  return <ErrorBoundary><CashFlow /></ErrorBoundary>;
+}
+
+function CashFlow() {
   // ── refs & size ───────────────────────────────────────────────────────────
   const svgRef = useRef(null);
   const [svgW, setSvgW] = useState(600);
@@ -36,7 +59,7 @@ export default function CashFlow() {
   useEffect(() => {
     const obs = new ResizeObserver(entries => {
       const w = entries[0].contentRect.width;
-      setSvgW(w); setSvgH(Math.max(320, w * 0.50));
+      setSvgW(w); setSvgH(Math.max(320, w * 0.54));
     });
     if (svgRef.current) obs.observe(svgRef.current);
     return () => obs.disconnect();
