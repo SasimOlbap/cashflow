@@ -4,6 +4,7 @@ import { LinkPath, ItemRow, SankeyNode } from "./components";
 import { useDrag } from "./useDrag";
 import { darkTheme, lightTheme } from "./theme";
 import { supabase } from "./supabase";
+import Landing from "./Landing";
 import {
   uid, fmt, pct,
   INIT_INCOME, INIT_EXPENSES, CATS, CAT_COLORS,
@@ -51,6 +52,7 @@ const loadMonths = () => {
 export default function App() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -69,11 +71,9 @@ export default function App() {
     </div>
   );
 
-  return (
-    <ErrorBoundary>
-      {session ? <CashFlow session={session} /> : <AuthScreen />}
-    </ErrorBoundary>
-  );
+  if (session) return <ErrorBoundary><CashFlow session={session} /></ErrorBoundary>;
+  if (showAuth) return <ErrorBoundary><AuthScreen /></ErrorBoundary>;
+  return <Landing onGetStarted={() => setShowAuth(true)} />;
 }
 
 // ── auth screen ───────────────────────────────────────────────────────────────
