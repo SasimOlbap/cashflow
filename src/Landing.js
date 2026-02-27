@@ -191,7 +191,7 @@ export default function Landing({ onGetStarted }) {
                     </div>
                   ))}
                 </div>
-                <button disabled={p.comingSoon} style={{
+                <button disabled={p.comingSoon} onClick={!p.comingSoon ? onGetStarted : undefined} style={{
                   width: "100%",
                   background: p.comingSoon ? (p.highlight ? "#2d2d3a" : "#f3f4f6") : (p.highlight ? "#7c3aed" : "#fff"),
                   color: p.comingSoon ? "#6b7280" : (p.highlight ? "#fff" : "#4b5563"),
