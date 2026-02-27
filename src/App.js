@@ -55,10 +55,8 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
-  const [authMode, setAuthMode] = useState("login");
   const [checkEmail, setCheckEmail] = useState(null);
   const [showWelcome, setShowWelcome] = useState(false);
-  const isNewSignup = useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -67,9 +65,8 @@ export default function App() {
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      if (event === "SIGNED_IN" && isNewSignup.current) {
+      if (event === "SIGNED_IN" && session?.user?.email_confirmed_at) {
         setShowWelcome(true);
-        isNewSignup.current = false;
       }
     });
     return () => subscription.unsubscribe();
@@ -84,15 +81,15 @@ export default function App() {
   if (showWelcome && session) return <Welcome onEnter={() => setShowWelcome(false)} />;
   if (session) return <ErrorBoundary><CashFlow session={session} /></ErrorBoundary>;
   if (checkEmail) return <CheckEmail email={checkEmail} />;
-  if (showAuth) return <ErrorBoundary><AuthScreen mode={authMode} onCheckEmail={(email) => setCheckEmail(email)} onNewSignup={() => { isNewSignup.current = true; }} /></ErrorBoundary>;
-  return <Landing onGetStarted={() => { setAuthMode("signup"); setShowAuth(true); }} onLogin={() => { setAuthMode("login"); setShowAuth(true); }} />;
+  if (showAuth) return <ErrorBoundary><AuthScreen onCheckEmail={(email) => setCheckEmail(email)} /></ErrorBoundary>;
+  return <Landing onGetStarted={() => setShowAuth(true)} />;
 }
 
 // ── auth screen ───────────────────────────────────────────────────────────────
-function AuthScreen({ onCheckEmail, mode, onNewSignup }) {
+function AuthScreen({ onCheckEmail }) {
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
-  const [isLogin,  setIsLogin]  = useState(mode !== "signup");
+  const [isLogin,  setIsLogin]  = useState(true);
   const [error,    setError]    = useState("");
   const [loading,  setLoading]  = useState(false);
 
@@ -105,18 +102,25 @@ function AuthScreen({ onCheckEmail, mode, onNewSignup }) {
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) setError(error.message);
-        else { onNewSignup(); onCheckEmail(email); }
+        else onCheckEmail(email);
       }
     } catch (e) { setError(e.message); }
     setLoading(false);
   };
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#0f0f1a", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
-      <div style={{ background: "#161625", border: "1px solid #2d2b55", borderRadius: 16, padding: "40px 36px", width: 360 }}>
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", fontFamily: "'DM Sans','Segoe UI',sans-serif", position: "relative", overflow: "hidden",
+      background: "radial-gradient(ellipse at 80% 20%, rgba(124,58,237,0.35) 0%, transparent 50%), radial-gradient(ellipse at 20% 80%, rgba(79,70,229,0.2) 0%, transparent 50%), #0a0818"
+    }}>
+      {/* Grid lines */}
+      <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", pointerEvents: "none" }} />
+      {/* Glow orbs */}
+      <div style={{ position: "absolute", top: "-20%", right: "-5%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", bottom: "-10%", left: "10%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(79,70,229,0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ position: "relative", zIndex: 1, background: "#161625", border: "1px solid #2d2b55", borderRadius: 16, padding: "40px 36px", width: 360 }}>
         <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "#7c3aed", marginBottom: 8 }}>Financial Overview</div>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: "#fff", margin: "0 0 4px", letterSpacing: "-0.02em" }}>Cash Flow Visualizer</h1>
-        <p style={{ color: "#6b7280", fontSize: 14, margin: "0 0 28px" }}>{isLogin ? "Log in to your account" : "Create a new account"}</p>
+        <p style={{ color: "#6b7280", fontSize: 14, margin: "0 0 28px" }}>{isLogin ? "Sign in to your account" : "Create a new account"}</p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <input
@@ -135,12 +139,12 @@ function AuthScreen({ onCheckEmail, mode, onNewSignup }) {
             background: "#7c3aed", border: "none", borderRadius: 8, color: "#fff",
             fontSize: 15, fontWeight: 600, padding: "11px", cursor: "pointer", marginTop: 4,
           }}>
-            {loading ? "..." : isLogin ? "Log In" : "Sign Up"}
+            {loading ? "..." : isLogin ? "Sign In" : "Sign Up"}
           </button>
           <button onClick={() => { setIsLogin(l => !l); setError(""); }} style={{
             background: "transparent", border: "none", color: "#9ca3af", fontSize: 13, cursor: "pointer", padding: 4,
           }}>
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Log in"}
+            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
           </button>
         </div>
       </div>
