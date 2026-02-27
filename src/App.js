@@ -5,6 +5,8 @@ import { useDrag } from "./useDrag";
 import { darkTheme, lightTheme } from "./theme";
 import { supabase } from "./supabase";
 import Landing from "./Landing";
+import CheckEmail from "./CheckEmail";
+import Welcome from "./Welcome";
 import {
   uid, fmt, pct,
   INIT_INCOME, INIT_EXPENSES, CATS, CAT_COLORS,
@@ -53,14 +55,19 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
+  const [checkEmail, setCheckEmail] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setAuthLoading(false);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      if (event === "SIGNED_IN" && session?.user?.email_confirmed_at) {
+        setShowWelcome(true);
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -71,13 +78,15 @@ export default function App() {
     </div>
   );
 
+  if (showWelcome && session) return <Welcome onEnter={() => setShowWelcome(false)} />;
   if (session) return <ErrorBoundary><CashFlow session={session} /></ErrorBoundary>;
-  if (showAuth) return <ErrorBoundary><AuthScreen /></ErrorBoundary>;
+  if (checkEmail) return <CheckEmail email={checkEmail} />;
+  if (showAuth) return <ErrorBoundary><AuthScreen onCheckEmail={(email) => setCheckEmail(email)} /></ErrorBoundary>;
   return <Landing onGetStarted={() => setShowAuth(true)} />;
 }
 
 // ── auth screen ───────────────────────────────────────────────────────────────
-function AuthScreen() {
+function AuthScreen({ onCheckEmail }) {
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [isLogin,  setIsLogin]  = useState(true);
@@ -87,10 +96,14 @@ function AuthScreen() {
   const handleSubmit = async () => {
     setError(""); setLoading(true);
     try {
-      const { error } = isLogin
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
-      if (error) setError(error.message);
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) setError(error.message);
+      } else {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) setError(error.message);
+        else onCheckEmail(email);
+      }
     } catch (e) { setError(e.message); }
     setLoading(false);
   };
@@ -550,7 +563,7 @@ function CashFlow({ session }) {
             ))}
             <div style={{ display: "flex", gap: 5, marginTop: 12, flexWrap: "wrap" }}>
               <input placeholder="New item…" value={neLabel} onChange={e => setNeLabel(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && addEx()} style={inpSt} />
+                onKeyDown={e => e.key === "Enter" && addEx()} style={selSt} />
               <select value={neCat} onChange={e => setNeCat(e.target.value)} style={selSt}>
                 {CATS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
