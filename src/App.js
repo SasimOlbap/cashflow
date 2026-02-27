@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, Component } from "react";
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { buildLayout } from "./buildLayout";
 import { LinkPath, ItemRow, SankeyNode } from "./components";
 import { useDrag } from "./useDrag";
@@ -66,14 +67,32 @@ export default function App() {
   }, []);
 
   if (authLoading) return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#0f0f1a" }}>
-      <div style={{ color: "#c4b5fd", fontSize: 18 }}>Loading...</div>
-    </div>
+    <>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#0f0f1a" }}>
+        <div style={{ color: "#c4b5fd", fontSize: 18 }}>Loading...</div>
+      </div>
+      <SpeedInsights />
+    </>
   );
 
-  if (session) return <ErrorBoundary><CashFlow session={session} /></ErrorBoundary>;
-  if (showAuth) return <ErrorBoundary><AuthScreen /></ErrorBoundary>;
-  return <Landing onGetStarted={() => setShowAuth(true)} />;
+  if (session) return (
+    <>
+      <ErrorBoundary><CashFlow session={session} /></ErrorBoundary>
+      <SpeedInsights />
+    </>
+  );
+  if (showAuth) return (
+    <>
+      <ErrorBoundary><AuthScreen /></ErrorBoundary>
+      <SpeedInsights />
+    </>
+  );
+  return (
+    <>
+      <Landing onGetStarted={() => setShowAuth(true)} />
+      <SpeedInsights />
+    </>
+  );
 }
 
 // ── auth screen ───────────────────────────────────────────────────────────────
