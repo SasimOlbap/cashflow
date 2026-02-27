@@ -152,6 +152,7 @@ function CashFlow({ session }) {
   const [hovered,   setHovered]   = useState(null);
   const [months,    setMonths]    = useState(loadMonths);
   const [curKey,    setCurKey]    = useState(initKey);
+  const [hovMonth,  setHovMonth]  = useState(null);
   const [niLabel,   setNiLabel]   = useState("");
   const [niType,    setNiType]    = useState("active");
   const [neLabel,   setNeLabel]   = useState("");
@@ -215,7 +216,8 @@ function CashFlow({ session }) {
   }, [months]);
 
   // Current month data
-  const curData    = months[curKey] || { income: [], expenses: [] };
+  const displayKey = hovMonth || curKey;
+  const curData    = months[displayKey] || { income: [], expenses: [] };
   const income     = curData.income;
   const expenses   = curData.expenses;
   const isEmpty    = income.length === 0 && expenses.length === 0;
@@ -476,24 +478,30 @@ function CashFlow({ session }) {
             {MONTH_NAMES.map((name, i) => {
               const key = toKey(today.getFullYear(), i + 1);
               const isSelected = key === curKey;
+              const isHovered = key === hovMonth;
               const hasData = !!(months[key]?.income?.length || months[key]?.expenses?.length);
               return (
-                <button key={key} onClick={() => {
-                  if (!months[key]) setMonths(p => ({ ...p, [key]: { income: [], expenses: [] } }));
-                  setCurKey(key);
-                }} style={{
-                  background: isSelected ? T.bgCard : "transparent",
-                  border: isSelected ? `1px solid ${T.border}` : "1px solid transparent",
-                  borderRadius: 8,
-                  color: isSelected ? "#c4b5fd" : hasData ? T.text : T.textFaint,
-                  fontSize: 13,
-                  fontWeight: isSelected ? 700 : 400,
-                  padding: "6px 4px",
-                  cursor: "pointer",
-                  textAlign: "center",
-                  opacity: isSelected ? 1 : hasData ? 0.8 : 0.35,
-                  transition: "all 0.15s",
-                }}>
+                <button key={key}
+                  onClick={() => {
+                    if (!months[key]) setMonths(p => ({ ...p, [key]: { income: [], expenses: [] } }));
+                    setCurKey(key);
+                    setHovMonth(null);
+                  }}
+                  onMouseEnter={() => hasData && setHovMonth(key)}
+                  onMouseLeave={() => setHovMonth(null)}
+                  style={{
+                    background: isSelected || isHovered ? T.bgCard : "transparent",
+                    border: isSelected ? `1px solid ${T.border}` : isHovered ? `1px solid ${T.accent}44` : "1px solid transparent",
+                    borderRadius: 8,
+                    color: isSelected || isHovered ? "#c4b5fd" : hasData ? T.text : T.textFaint,
+                    fontSize: 13,
+                    fontWeight: isSelected || isHovered ? 700 : 400,
+                    padding: "6px 4px",
+                    cursor: "pointer",
+                    textAlign: "center",
+                    opacity: isSelected || isHovered ? 1 : hasData ? 0.8 : 0.35,
+                    transition: "all 0.15s",
+                  }}>
                   {name}
                 </button>
               );
